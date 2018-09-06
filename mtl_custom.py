@@ -32,9 +32,9 @@ def gen_data(N):
 
 import pylab
 from pylab import hist
-
-from IPython import get_ipython
-get_ipython().run_line_magic('matplotlib', 'inline')
+#
+# from IPython import get_ipython
+# get_ipython().run_line_magic('matplotlib', 'inline')
 
 # %matplotlib inline
 
@@ -68,7 +68,7 @@ assert len(trainable_model.layers[-1].trainable_weights) == 2  # two log_vars, o
 assert len(trainable_model.losses) == 1
 
 
-pylab.plot(hist.history['loss'])
+# pylab.plot(hist.history['loss'])
 
 # Found standard deviations (ground truth is 10 and 1):
 [np.exp(K.get_value(log_var[0]))**0.5 for log_var in trainable_model.layers[-1].log_vars]

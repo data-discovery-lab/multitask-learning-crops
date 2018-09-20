@@ -39,7 +39,7 @@ plt.grid(True)
 for i in range(len(x1_data)):
     plt.scatter(x1_data[i], x2_data[i], marker=matplotlib_marker[i])
 
-plt.savefig('gaussian_processes_2d_training_data.png', bbox_inches='tight')
+plt.savefig('output/gaussian_processes_2d_training_data.png', bbox_inches='tight')
 # plt.show()
 plt.close()
 

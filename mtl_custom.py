@@ -17,7 +17,6 @@ Q = 1
 D1 = 1  # first output
 D2 = 1  # second output
 
-
 def gen_data(N):
     X = np.random.randn(N, Q)
     w1 = 2.

@@ -4,6 +4,7 @@
 # Import Tensorflow and Numpy
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 
 # ======================
 # Define the Graph
@@ -43,18 +44,39 @@ Optimiser = tf.train.AdamOptimizer().minimize(Joint_Loss)
 # ==========================
 
 # open the session
-# tf_graph = tf.Graph()
-# tf_session = tf.Session(graph=tf_graph)
-
+results = []
 with tf.Session() as session:
     # session.run(tf.initialize_all_variables())
     session.run(tf.global_variables_initializer())
 
-    _, Joint_loss = session.run([Optimiser, Joint_Loss],
-                    {
-                      X: np.random.rand(10,10)*10,
-                      Y1: np.random.rand(10,20)*10,
-                      Y2: np.random.rand(10,20)*10
-                      })
-    print(Joint_loss)
+    for i in range(1000):
+        _, Joint_loss = session.run([Optimiser, Joint_Loss],
+                                    {
+                                        X: np.random.rand(10, 10) * 10,
+                                        Y1: np.random.rand(10, 20) * 10,
+                                        Y2: np.random.rand(10, 20) * 10
+                                    })
+
+        if i % 50 == 0:
+            # run on test data
+            fd = {}
+            fd.update({
+                        X: np.random.rand(10, 10) * 10,
+                        Y1: np.random.rand(10, 20) * 10,
+                        Y2: np.random.rand(10, 20) * 10
+                    })
+
+            _, Joint_loss = session.run([Optimiser, Joint_Loss], feed_dict=fd)
+            print(Joint_loss)
+            results.append(dict(step_no=i, loss=Joint_loss))
+
+
     session.close()
+
+print("Done!")
+# ## We save the results for looking at them later.
+df = pd.DataFrame(results)
+df.to_pickle("output/multi-task-gp.pdpick")
+
+
+

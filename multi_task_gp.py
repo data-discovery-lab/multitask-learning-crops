@@ -26,8 +26,9 @@ Y2_layer_weights = tf.Variable(initial_Y2_layer_weights, name="share_Y2", dtype=
 
 # Construct the Layers with RELU Activations
 shared_layer = tf.nn.relu(tf.matmul(X,shared_layer_weights))
-Y1_layer = tf.nn.relu(tf.matmul(shared_layer,Y1_layer_weights))
-Y2_layer = tf.nn.relu(tf.matmul(shared_layer,Y2_layer_weights))
+
+Y1_layer = tf.nn.relu(tf.matmul(shared_layer, Y1_layer_weights))
+Y2_layer = tf.nn.relu(tf.matmul(shared_layer, Y2_layer_weights))
 
 # Calculate Loss
 Y1_Loss = tf.nn.l2_loss(Y1-Y1_layer)

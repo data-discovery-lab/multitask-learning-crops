@@ -37,15 +37,14 @@ Joint_Loss = Y1_Loss + Y2_Loss
 
 # optimisers
 Optimiser = tf.train.AdamOptimizer().minimize(Joint_Loss)
-# Y1_op = tf.train.AdamOptimizer().minimize(Y1_Loss)
-# Y2_op = tf.train.AdamOptimizer().minimize(Y2_Loss)
-
 
 # Joint Training
 # Calculation (Session) Code
 # ==========================
 
 # open the session
+# tf_graph = tf.Graph()
+# tf_session = tf.Session(graph=tf_graph)
 
 with tf.Session() as session:
     # session.run(tf.initialize_all_variables())

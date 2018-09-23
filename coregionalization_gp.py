@@ -27,10 +27,14 @@ kern = k1 * coreg
 lik = gpflow.likelihoods.SwitchedLikelihood([gpflow.likelihoods.StudentT(), gpflow.likelihoods.StudentT()])
 
 # Augment the time data with ones or zeros to indicate the required output dimension
-X_augmented = np.vstack((np.hstack((X1, np.zeros_like(X1))), np.hstack((X2, np.ones_like(X2)))))
+stacked_X1 = np.hstack((X1, np.zeros_like(X1)))
+stacked_X2 = np.hstack((X2, np.ones_like(X2)))
+X_augmented = np.vstack((stacked_X1, stacked_X2))
 
 # Augment the Y data to indicate which likelihood we should use
-Y_augmented = np.vstack((np.hstack((Y1, np.zeros_like(X1))), np.hstack((Y2, np.ones_like(X2)))))
+stacked_Y1 = np.hstack((Y1, np.zeros_like(X1)))
+stacked_Y2 = np.hstack((Y2, np.ones_like(X2)))
+Y_augmented = np.vstack((stacked_Y1, stacked_Y2))
 
 # now build the GP model as normal
 m = gpflow.models.VGP(X_augmented, Y_augmented, kern=kern, likelihood=lik, num_latent=1)
@@ -48,11 +52,13 @@ def plot_gp(x, mu, var, color='k'):
 def plot(m):
     xtest = np.linspace(0, 1, 100)[:,None]
     line, = plt.plot(X1, Y1, 'x', mew=2)
-    mu, var = m.predict_f(np.hstack((xtest, np.zeros_like(xtest))))
+    stacked_xtest1 = np.hstack((xtest, np.zeros_like(xtest)))
+    mu, var = m.predict_f(stacked_xtest1)
     plot_gp(xtest, mu, var, line.get_color())
 
     line, = plt.plot(X2, Y2, 'x', mew=2)
-    mu, var = m.predict_f(np.hstack((xtest, np.ones_like(xtest))))
+    stacked_xtest2 = np.hstack((xtest, np.ones_like(xtest)))
+    mu, var = m.predict_f(stacked_xtest2)
     plot_gp(xtest, mu, var, line.get_color())
 
 plot(m)

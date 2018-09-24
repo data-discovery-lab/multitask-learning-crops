@@ -54,18 +54,28 @@ with gpf.defer_build():
     lik = gpf.likelihoods.SwitchedLikelihood([gpf.likelihoods.StudentT(), gpf.likelihoods.StudentT()])
 
     # Augment the time data with ones or zeros to indicate the required output dimension
-    stacked_X1 = np.hstack((X1, np.zeros_like(X1)))
-    stacked_X2 = np.hstack((X2, np.ones_like(X2)))
-    X_augmented = np.vstack((stacked_X1, stacked_X2))
+    X1_avg = Y1_layer
+    stacked_X1 = np.hstack((Y1_layer, np.zeros_like(Y1_layer)))
+    stacked_X2 = np.hstack((X1_avg, np.ones_like(X1_avg)))
+    X1_augmented = np.vstack((stacked_X1, stacked_X2))
+
+    Y1_label = np.hstack((Y1_holder, np.zeros_like(Y1_holder)))
+    Y1_avg_label = np.hstack((Y1_holder, np.ones_like(Y1_holder)))
+    Y1_augmented = np.vstack((Y1_label, Y1_avg_label))
 
     # Augment the Y data to indicate which likelihood we should use
-    stacked_Y1 = np.hstack((Y1, np.zeros_like(X1)))
-    stacked_Y2 = np.hstack((Y2, np.ones_like(X2)))
-    Y_augmented = np.vstack((stacked_Y1, stacked_Y2))
+    Y2_avg = Y2_layer
+    stacked_Y1 = np.hstack((Y2_layer, np.zeros_like(Y2_layer)))
+    stacked_Y2 = np.hstack((Y2_avg, np.ones_like(Y2_avg)))
+    X2_augmented = np.vstack((stacked_Y1, stacked_Y2))
+
+    Y2_label = np.hstack((Y2_holder, np.zeros_like(Y1_holder)))
+    Y2_avg_label = np.hstack((Y2_holder, np.ones_like(Y2_holder)))
+    Y2_augmented = np.vstack((Y2_label, Y2_avg_label))
 
     # now build the GP model as normal
-    gp_model1 = gpf.models.VGP(X_augmented, Y_augmented, kern=kern, likelihood=lik, num_latent=1)
-    gp_model2 = gpf.models.VGP(X_augmented, Y_augmented, kern=kern, likelihood=lik, num_latent=1)
+    gp_model1 = gpf.models.VGP(X1_augmented, Y1_augmented, kern=kern, likelihood=lik, num_latent=1)
+    gp_model2 = gpf.models.VGP(X2_augmented, Y2_augmented, kern=kern, likelihood=lik, num_latent=1)
 
 
 gp_model1.compile(tf_session)
@@ -103,7 +113,7 @@ with tf_graph.as_default():
                     })
 
             _, Joint_loss = tf_session.run([optimiser, Joint_Loss], feed_dict=fd)
-            print(Joint_loss)
+            print("iteratiom:", i, "joint loss", Joint_loss)
 
 
             ## create test data and predict

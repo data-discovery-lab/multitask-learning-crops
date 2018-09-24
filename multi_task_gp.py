@@ -6,22 +6,35 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import gpflow as gpf
+import matplotlib.pyplot as plt
 
 # open the session
 tf_graph = tf.Graph()
 tf_session = tf.Session(graph=tf_graph)
 
+# X1 = np.random.rand(10, 1)
+# Y1 = np.sin(6*X1) + np.random.standard_t(3, X1.shape)*0.03
+#
+# X2 = X1
+# Y2 = np.sin(6*X2+ 0.7) + np.random.standard_t(3, X2.shape)*0.1
+
+# plt.plot(X1, Y1, 'x', mew=2)
+# plt.plot(X2, Y2, 'x', mew=2)
+#
+# plt.show()
 ## define the multi learning task graph - this is an example, so we have two tasks
 ### https://jg8610.github.io/Multi-Task/
 with tf_graph.as_default():
+
+
     # ======================
     # Define the Graph
     # ======================
 
     # Define the Placeholders
-    X_holder = tf.placeholder("float", [10, 10], name="X")
-    Y1_holder = tf.placeholder("float", [10, 20], name="Y1")
-    Y2_holder = tf.placeholder("float", [10, 20], name="Y2")
+    X_holder = tf.placeholder("float", shape=[10, 10], name="X_holder")
+    Y1_holder = tf.placeholder("float", shape=[10, 20], name="Y1_holder")
+    Y2_holder = tf.placeholder("float", shape=[10, 20], name="Y2_holder")
 
     # Define the weights for the layers
 
@@ -54,41 +67,59 @@ with gpf.defer_build():
     lik = gpf.likelihoods.SwitchedLikelihood([gpf.likelihoods.StudentT(), gpf.likelihoods.StudentT()])
 
     # Augment the time data with ones or zeros to indicate the required output dimension
-    X1_avg = Y1_layer
-    stacked_X1 = np.hstack((Y1_layer, np.zeros_like(Y1_layer)))
-    stacked_X2 = np.hstack((X1_avg, np.ones_like(X1_avg)))
-    X1_augmented = np.vstack((stacked_X1, stacked_X2))
-
-    Y1_label = np.hstack((Y1_holder, np.zeros_like(Y1_holder)))
-    Y1_avg_label = np.hstack((Y1_holder, np.ones_like(Y1_holder)))
-    Y1_augmented = np.vstack((Y1_label, Y1_avg_label))
-
-    # Augment the Y data to indicate which likelihood we should use
-    Y2_avg = Y2_layer
-    stacked_Y1 = np.hstack((Y2_layer, np.zeros_like(Y2_layer)))
-    stacked_Y2 = np.hstack((Y2_avg, np.ones_like(Y2_avg)))
-    X2_augmented = np.vstack((stacked_Y1, stacked_Y2))
-
-    Y2_label = np.hstack((Y2_holder, np.zeros_like(Y1_holder)))
-    Y2_avg_label = np.hstack((Y2_holder, np.ones_like(Y2_holder)))
-    Y2_augmented = np.vstack((Y2_label, Y2_avg_label))
+    # X1_avg = np.random.rand(10, 1)
+    # stacked_X1 = np.hstack((Y1_layer, np.zeros_like(Y1_layer)))
+    # stacked_X2 = np.hstack((X1_avg, np.ones_like(X1_avg)))
+    # X1_augmented = np.vstack((stacked_X1, stacked_X2))
+    #
+    # Y1_label = np.hstack((Y1_holder, np.zeros_like(Y1_holder)))
+    # Y1_avg_label = np.hstack((Y1_holder, np.ones_like(Y1_holder)))
+    # Y1_augmented = np.vstack((Y1_label, Y1_avg_label))
+    #
+    # # Augment the Y data to indicate which likelihood we should use
+    # Y2_avg = Y2_layer
+    # stacked_Y1 = np.hstack((Y2_layer, np.zeros_like(Y2_layer)))
+    # stacked_Y2 = np.hstack((Y2_avg, np.ones_like(Y2_avg)))
+    # X2_augmented = np.vstack((stacked_Y1, stacked_Y2))
+    #
+    # Y2_label = np.hstack((Y2_holder, np.zeros_like(Y1_holder)))
+    # Y2_avg_label = np.hstack((Y2_holder, np.ones_like(Y2_holder)))
+    # Y2_augmented = np.vstack((Y2_label, Y2_avg_label))
 
     # now build the GP model as normal
-    gp_model1 = gpf.models.VGP(X1_augmented, Y1_augmented, kern=kern, likelihood=lik, num_latent=1)
-    gp_model2 = gpf.models.VGP(X2_augmented, Y2_augmented, kern=kern, likelihood=lik, num_latent=1)
+    gp_model1 = gpf.models.VGP(Y1_layer, Y1_holder, kern=kern, likelihood=lik, num_latent=1)
+    gp_model2 = gpf.models.VGP(Y2_layer, Y2_holder, kern=kern, likelihood=lik, num_latent=1)
 
 
 gp_model1.compile(tf_session)
 gp_model2.compile(tf_session)
 
+
+### Jointly train the model
+### joint loss and individual losses must be minimized
 ## joint loss
 with tf_graph.as_default():
-    # Calculate Loss
+
+    ## individual loss
+    gpf.train.ScipyOptimizer().minimize(gp_model1)
+    gpf.train.ScipyOptimizer().minimize(gp_model2)
+
+    # Calculate joint Loss
     Joint_Loss = gp_model1.objective + gp_model2.objective
 
     # optimisers
     optimiser = tf.train.AdamOptimizer()
     minimise = optimiser.minimize(Joint_Loss)  # this should pick up all Trainable variables.
+# with tf_graph.as_default():
+#     # Calculate Loss
+#     Y1_Loss = tf.nn.l2_loss(Y1_holder-Y1_layer)
+#     Y2_Loss = tf.nn.l2_loss(Y2_holder-Y2_layer)
+#     Joint_Loss = Y1_Loss + Y2_Loss
+#
+#     # optimisers
+#     optimiser = tf.train.AdamOptimizer().minimize(Joint_Loss)
+#     Y1_op = tf.train.AdamOptimizer().minimize(Y1_Loss)
+#     Y2_op = tf.train.AdamOptimizer().minimize(Y2_Loss)
 
 results = []
 with tf_graph.as_default():

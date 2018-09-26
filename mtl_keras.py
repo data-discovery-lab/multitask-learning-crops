@@ -34,10 +34,10 @@ out3 = Dense(units=1, activation='linear')(sub3)
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
 
-
-label1 = np.random.rand(800, 1)
-label2 = np.random.rand(800, 1)
-label3 = np.random.rand(800, 1)
+num_labels = dat_train.shape[0]
+label1 = np.random.rand(num_labels, 1)
+label2 = np.random.rand(num_labels, 1)
+label3 = np.random.rand(num_labels, 1)
 
 label_test = np.random.rand(200, 1)
 

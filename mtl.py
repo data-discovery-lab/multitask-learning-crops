@@ -8,6 +8,9 @@ import pandas as pd
 import gpflow as gpf
 import matplotlib.pyplot as plt
 
+from sklearn.linear_model import MultiTaskLasso, Lasso
+
+
 # open the session
 tf_graph = tf.Graph()
 tf_session = tf.Session(graph=tf_graph)
@@ -100,6 +103,13 @@ with tf_graph.as_default():
 
             results.append(dict(step_no=i, loss=Joint_loss))
 
+        # run prediction
+        if i % 50 == 0:
+            predicted_1, predicted_2 = tf_session.run([Y1_layer, Y2_layer],
+                                           {
+                                               X_holder: np.random.rand(10, 10) * 10
+                                           })
+            print("predicted 1:", predicted_1, "; predicted 2:", predicted_2)
 
     tf_session.close()
 

@@ -9,8 +9,6 @@ n_row = 1000
 x1 = np.random.randn(n_row)
 x2 = np.random.randn(n_row)
 x3 = np.random.randn(n_row)
-y_classifier = np.array([1 if (x1[i] + x2[i] + (x3[i])/3 + np.random.randn(1) > 1) else 0 for i in range(n_row)])
-y_cts = x1 + x2 + x3/3 + np.random.randn(n_row)
 dat = np.array([x1, x2, x3]).transpose()
 
 # Generate indexes of test and train
@@ -21,10 +19,6 @@ idx_train = np.delete(idx_list, idx_test).astype('int')
 # Split data into test and train
 dat_train = dat[idx_train, :]
 dat_test = dat[idx_test, :]
-y_classifier_train = y_classifier[idx_train]
-y_classifier_test = y_classifier[idx_test]
-y_cts_train = y_cts[idx_train]
-y_cts_test = y_cts[idx_test]
 
 
 x = Input(shape=(3, ))

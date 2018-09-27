@@ -71,7 +71,7 @@ model = Model(inputs=x, outputs=[out1, out2, out3])
 #     return mean_squared_log_error(a, b)
 
 # Compiling the model using 'adam' optimizer and MSE as loss function
-model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae', 'mape'])
+model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae', 'mape'],  loss_weights=[1.0, 1.0, 1.0])
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []

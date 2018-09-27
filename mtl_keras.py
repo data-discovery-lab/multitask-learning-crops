@@ -2,7 +2,8 @@ from keras.callbacks import Callback
 from keras.engine.input_layer import Input
 from keras.engine.training import Model
 from keras.layers.core import Dense
-# from sklearn.metrics import
+from sklearn.metrics import mean_squared_log_error, mean_squared_error
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -66,18 +67,21 @@ out3 = Dense(units=1, activation='linear')(sub3)
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
 
+# def my_loss_function(a,b):
+#     return mean_squared_log_error(a, b)
 
 # Compiling the model using 'adam' optimizer and MSE as loss function
 model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae', 'mape'])
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []
-model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=100, batch_size=20)
+model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=500, batch_size=20)
 
-# pred1, pred2, pred3 = model.predict(dat_test)
-#
-# plot_x = dat_test[:, 0]
-# plot_y = np.array(pred1) - label_test_1
-# plt.scatter(x=dat_test[:, 0], y=np.array(pred1) - label_test_1)
-#
-# plt.show()
+pred1, pred2, pred3 = model.predict(dat_test)
+
+plot_x = dat_test[:, 0]
+plot_y = pred1.flatten() - label_test_1
+plt.scatter(x=plot_x, y=plot_y)
+
+print("test mse=", mean_squared_error(label_test_1, pred1.flatten()))
+plt.show()

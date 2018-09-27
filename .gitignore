@@ -1,4 +1,5 @@
 .idea/
 output/
+data/
 mnist_data/
 __pycache__/

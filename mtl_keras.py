@@ -2,24 +2,24 @@ from keras.callbacks import Callback
 from keras.engine.input_layer import Input
 from keras.engine.training import Model
 from keras.layers.core import Dense
+from pandas.core.frame import DataFrame
 from sklearn.metrics import mean_squared_log_error, mean_squared_error
+from keras import backend as K
+import tensorflow as tf
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
-
-class TestCallback(Callback):
-    def __init__(self, test_data):
-        self.test_data = test_data
-
-    def on_epoch_end(self, epoch, logs={}):
-        x, y = self.test_data
-        loss, acc = self.model.evaluate(x, y, verbose=0)
-        print('\nTesting loss: {}, acc: {}\n'.format(loss, acc))
-
+from sklearn.preprocessing.data import MinMaxScaler
 
 df = pd.read_csv('data/data_excel_converted.csv', delimiter=',')
+
+# ensure all data is float
+# values = df.values.astype('float32')
+# normalize features
+# scaler = MinMaxScaler(feature_range=(0, 1))
+# scaled = scaler.fit_transform(values)
+# df = DataFrame(scaled)
 
 samples = 475
 features = 42
@@ -67,6 +67,20 @@ out3 = Dense(units=1, activation='linear')(sub3)
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
 
+def correlation_coefficient_loss(y_true, y_pred):
+    # x = y_true
+    # y = y_pred
+    # mx = K.mean(x)
+    # my = K.mean(y)
+    # xm, ym = x-mx, y-my
+    # r_num = K.sum(tf.multiply(xm,ym))
+    # r_den = K.sqrt(tf.multiply(K.sum(K.square(xm)), K.sum(K.square(ym))))
+    # r = r_num / r_den
+    #
+    # r = K.maximum(K.minimum(r, 1.0), -1.0)
+    # return 1 - K.square(r)
+    print("y=", y_true)
+    return mean_squared_error(y_true, y_pred)
 # def my_loss_function(a,b):
 #     return mean_squared_log_error(a, b)
 
@@ -75,13 +89,16 @@ model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []
-model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=500, batch_size=20)
+model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=5000, batch_size=20)
 
 pred1, pred2, pred3 = model.predict(dat_test)
+
+# inv_y = scaler.inverse_transform(inv_y)
 
 plot_x = dat_test[:, 0]
 plot_y = pred1.flatten() - label_test_1
 plt.scatter(x=plot_x, y=plot_y)
 
 print("test mse=", mean_squared_error(label_test_1, pred1.flatten()))
+print("me=", max(abs(plot_y)))
 plt.show()

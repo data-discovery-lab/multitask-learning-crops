@@ -3,9 +3,10 @@ from keras.engine.input_layer import Input
 from keras.engine.training import Model
 from keras.layers.core import Dense
 from pandas.core.frame import DataFrame
-from sklearn.metrics import mean_squared_log_error, mean_squared_error
+from sklearn.metrics import mean_squared_log_error, mean_squared_error, mean_absolute_error
 from keras import backend as K
 import tensorflow as tf
+from sklearn.utils import check_array
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,7 +29,13 @@ test_size = int(0.2*samples)
 
 ### shape = (samples, features)
 dat = []
+grid_cells = None
+grid_cells_id = None
 for i in range(50):
+    if i == 0:
+        grid_cells = df[df.columns[i]].values
+    elif i == 1:
+        grid_cells_id = df[df.columns[i]].values
     if i < 8:
         continue
     dat.append(df[df.columns[i]])
@@ -39,6 +46,9 @@ dat = np.array(dat).transpose()
 idx_list = np.linspace(0, samples-1, num=samples)
 idx_test = np.random.choice(samples, size=test_size, replace=False)
 idx_train = np.delete(idx_list, idx_test).astype('int')
+
+grid_cells_test = grid_cells[idx_test]
+grid_cells_id_test = grid_cells[idx_test]
 
 # Split data into test and train
 dat_train = dat[idx_train, :]
@@ -67,20 +77,16 @@ out3 = Dense(units=1, activation='linear')(sub3)
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
 
-def correlation_coefficient_loss(y_true, y_pred):
-    # x = y_true
-    # y = y_pred
-    # mx = K.mean(x)
-    # my = K.mean(y)
-    # xm, ym = x-mx, y-my
-    # r_num = K.sum(tf.multiply(xm,ym))
-    # r_den = K.sqrt(tf.multiply(K.sum(K.square(xm)), K.sum(K.square(ym))))
-    # r = r_num / r_den
-    #
-    # r = K.maximum(K.minimum(r, 1.0), -1.0)
-    # return 1 - K.square(r)
-    print("y=", y_true)
-    return mean_squared_error(y_true, y_pred)
+def mean_absolute_percentage_error(y_true, y_pred):
+    # y_true = check_array(y_true)
+    # y_pred = check_array(y_pred)
+
+    ## Note: does not handle mix 1d representation
+    #if _is_1d(y_true):
+    #    y_true, y_pred = _check_1d_array(y_true, y_pred)
+
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
 # def my_loss_function(a,b):
 #     return mean_squared_log_error(a, b)
 
@@ -97,8 +103,32 @@ pred1, pred2, pred3 = model.predict(dat_test)
 
 plot_x = dat_test[:, 0]
 plot_y = pred1.flatten() - label_test_1
-plt.scatter(x=plot_x, y=plot_y)
+# plt.scatter(x=plot_x, y=plot_y)
+
+final_data = np.array([
+    grid_cells_test,
+    label_test_1,
+    pred1.flatten(),
+    grid_cells_id_test
+]).transpose()
+
+## sort by first column
+final_data = final_data[final_data[:, 0].argsort()]
+
+final_x = final_data[:, 0]
+final_label = final_data[:, 1]
+final_prediction = final_data[:, 2]
+final_cell_id = final_data[:, 3]
+# final_data.sort(axis=1)
+
+my_output = pd.DataFrame({'fid': final_x, 'id': final_cell_id, 'label': final_label, 'predicted': final_prediction})
+my_output.to_csv('output/prediction.csv', index=False)
+
+plt.plot(final_x,  final_prediction, 'red')
+plt.plot(final_x, final_label, 'blue')
 
 print("test mse=", mean_squared_error(label_test_1, pred1.flatten()))
+print("test mape=", mean_absolute_percentage_error(label_test_1, pred1.flatten()))
+print("test mae=", mean_absolute_error(label_test_1, pred1.flatten()))
 print("me=", max(abs(plot_y)))
 plt.show()

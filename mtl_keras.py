@@ -105,7 +105,15 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 def my_loss_function(y_true, y_pred):
 
-    return K.mean(K.square(y_pred - y_true), axis=-1)
+    mean_square_loss = K.mean(K.square(y_pred - y_true), axis=-1)
+    neighbor_size = 1
+    rng = np.random.RandomState(42)
+    ## 1 neighbor
+    neighbors = rng.randn(test_size, neighbor_size).astype('float32')
+
+    mean_average_neighbor_loss = K.mean(K.square(y_pred - K.sum(neighbors) / neighbor_size), axis=-1)
+
+    return mean_square_loss + mean_average_neighbor_loss
 
     # return mean_squared_error(y_true, y_pred)
 
@@ -115,7 +123,7 @@ model.compile(optimizer='adam', loss=my_loss_function,  metrics=['mse', 'mae', '
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []
-model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=5000, batch_size=20)
+model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=5, batch_size=20)
 
 pred1, pred2, pred3 = model.predict(dat_test)
 

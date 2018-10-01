@@ -13,6 +13,20 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing.data import MinMaxScaler
 
+from keras.regularizers import l2
+
+def kernel_regu(weight_matrix:None):
+    print("done")
+
+    return 0
+
+
+def activity_regu(output:None):
+    print('done!!!!!!!!!!!!!!!!!!!!', output)
+
+    return 0
+
+
 df = pd.read_csv('data/data_excel_converted.csv', delimiter=',')
 
 # ensure all data is float
@@ -70,12 +84,13 @@ sub1 = Dense(units=16, activation='relu')(shared)
 sub2 = Dense(units=16, activation='relu')(shared)
 sub3 = Dense(units=16, activation='relu')(shared)
 
-out1 = Dense(units=1, activation='linear')(sub1)
+out1 = Dense(units=1, activation='linear', kernel_regularizer=kernel_regu, activity_regularizer=activity_regu )(sub1)
 out2 = Dense(units=1, activation='linear')(sub2)
 out3 = Dense(units=1, activation='linear')(sub3)
 
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
+
 
 def mean_absolute_percentage_error(y_true, y_pred):
     # y_true = check_array(y_true)
@@ -87,11 +102,16 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-# def my_loss_function(a,b):
-#     return mean_squared_log_error(a, b)
+
+def my_loss_function(y_true, y_pred):
+
+    return K.mean(K.square(y_pred - y_true), axis=-1)
+
+    # return mean_squared_error(y_true, y_pred)
 
 # Compiling the model using 'adam' optimizer and MSE as loss function
-model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae', 'mape'],  loss_weights=[1.0, 1.0, 1.0])
+model.compile(optimizer='adam', loss=my_loss_function,  metrics=['mse', 'mae', 'mape'],  loss_weights=[1.0, 1.0, 1.0])
+# model.compile(optimizer='adam', loss='mean_squared_error',  metrics=['mse', 'mae', 'mape'],  loss_weights=[1.0, 1.0, 1.0])
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []

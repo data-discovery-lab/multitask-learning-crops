@@ -1,11 +1,13 @@
 import csv
+import pandas as pd
 
 class Neighbor:
-    def __init__(self, id, distance):
+    def __init__(self, id, distance, crop_yield):
         self.id = id
         self.distance = distance
         self.weight = 1
         self.power_factor = 2
+        self.crop_yield = crop_yield
 
     def get_id(self):
         return self.id
@@ -16,13 +18,21 @@ class Neighbor:
     def get_weight(self):
         return self.weight
 
+    def get_crop_yield(self):
+        return self.crop_yield
+
+
 class Group:
-    def __init__(self, id):
+    def __init__(self, id, crop_yield):
         self.id = id
+        self.crop_yield = crop_yield
         self.neighbors = []
 
     def add_neighbor(self, nb):
         self.neighbors.append(nb)
+
+    def get_crop_yield(self):
+        return self.crop_yield
 
     def get_neighbors(self):
         return self.neighbors
@@ -42,45 +52,41 @@ class Group:
 
 groups = {}
 region_neighbors = {}
-with open('data/neighbor_cell_size_1.csv') as fp:
-    header = True
-    distance = 1
 
-    # compute neighbor size of each region
-    for line in fp:
-        if header == True:
-            header = False
-            continue
+df = pd.read_csv('data/Neighbor_cell_size_1.csv')
+distance = 1
 
-        regions = line.split(",")
-        if len(regions) < 2:
-            print("bad region, no neighbor")
-            continue
-        current = regions[0].strip()
+for index, row in df.iterrows():
 
-        if current not in region_neighbors:
-            region_neighbors[current] = []
+    current = row['Source_ID']
+    neighbor = row['Neighbor_ID']
+    source_yield = row['Source_YLD00']
+    neighbor_yield = row['Neighbor_YLD00']
 
-        nb = Neighbor(regions[1].strip(), distance)
-        ## append neighbor list
-        region_neighbors[current].append(nb)
+    if current not in region_neighbors:
+        region_neighbors[current] = []
 
-        if current not in groups:
-            groups[current] = Group(current)
+    nb = Neighbor(id=neighbor, distance=distance, crop_yield=neighbor_yield)
+    ## append neighbor list
+    region_neighbors[current].append(nb)
 
-        g = groups[current]
-        g.add_neighbor(nb)
+    if current not in groups:
+        groups[current] = Group(id=current, crop_yield=source_yield)
+
+    g = groups[current]
+    g.add_neighbor(nb)
+
 
 # compute normalized weight and write to file
 with open('data/neighbor_weight.csv', 'w') as csv_file:
     writer = csv.writer(csv_file, delimiter=',')
-    writer.writerow(["Cell", "Neighbor", "Weight"])
+    writer.writerow(["source", "neighbor", "nb_weight", "nb_yield"])
 
     for g_id, g in groups.items():
         g.compute_neighbor_weight()
 
         for nb in g.get_neighbors():
             print('id:', g_id, 'nb:', nb.get_id(),'weight:', nb.get_weight())
-            line = [g_id,  nb.get_id(), nb.get_weight()]
+            line = [g_id,  nb.get_id(), nb.get_weight(), nb.get_crop_yield()]
             writer.writerow(line)
 

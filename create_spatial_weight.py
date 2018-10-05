@@ -27,6 +27,7 @@ class Group:
         self.id = id
         self.crop_yield = crop_yield
         self.neighbors = []
+        self.weight = 0
 
     def add_neighbor(self, nb):
         self.neighbors.append(nb)
@@ -45,10 +46,17 @@ class Group:
 
     def compute_neighbor_weight(self):
         size = self.get_size()
+        w = 0
         for nb in self.neighbors:
             nb.compute_weight(size)
+            w_operand = nb.get_weight()*(abs(self.crop_yield - nb.get_crop_yield())**2)
+            w_operand = w_operand / self.crop_yield
+            w = w + w_operand
 
+        self.weight = w
 
+    def get_weight(self):
+        return self.weight
 
 groups = {}
 region_neighbors = {}
@@ -90,3 +98,14 @@ with open('data/neighbor_weight.csv', 'w') as csv_file:
             line = [g_id,  nb.get_id(), nb.get_weight(), nb.get_crop_yield()]
             writer.writerow(line)
 
+
+# compute normalized weight and write to file
+with open('data/finalized_weight.csv', 'w') as csv_file:
+    writer = csv.writer(csv_file, delimiter=',')
+    writer.writerow(["source", "nb_weight"])
+
+    for g_id, g in groups.items():
+        g.compute_neighbor_weight()
+
+        line = [g_id, g.get_weight()]
+        writer.writerow(line)

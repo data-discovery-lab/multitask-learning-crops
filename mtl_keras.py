@@ -2,6 +2,7 @@ from keras.callbacks import Callback
 from keras.engine.input_layer import Input
 from keras.engine.training import Model
 from keras.layers.core import Dense
+from keras.layers.recurrent import LSTM
 from pandas.core.frame import DataFrame
 from sklearn.metrics import mean_squared_log_error, mean_squared_error, mean_absolute_error
 from keras import backend as K
@@ -62,7 +63,7 @@ idx_test = np.random.choice(samples, size=test_size, replace=False)
 idx_train = np.delete(idx_list, idx_test).astype('int')
 
 grid_cells_test = grid_cells[idx_test]
-grid_cells_id_test = grid_cells[idx_test]
+grid_cells_id_test = grid_cells_id[idx_test]
 
 # Split data into test and train
 dat_train = dat[idx_train, :]
@@ -84,6 +85,8 @@ sub1 = Dense(units=16, activation='relu')(shared)
 sub2 = Dense(units=16, activation='relu')(shared)
 sub3 = Dense(units=16, activation='relu')(shared)
 
+# lstm1 = LSTM(16, return_sequences=True)(sub1)
+
 out1 = Dense(units=1, activation='linear', kernel_regularizer=kernel_regu, activity_regularizer=activity_regu )(sub1)
 out2 = Dense(units=1, activation='linear')(sub2)
 out3 = Dense(units=1, activation='linear')(sub3)
@@ -103,17 +106,51 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
+def get_neighbor_weight(cell_id):
+
+    df = pd.read_csv('data/neighbor_weight.csv')
+    # df = pd.read_csv('data/finalized_weight.csv')
+    nb_weights = df.loc[df['source'] == cell_id]
+
+    return nb_weights
+
+# cell_index = 0
+# def handle_sigle_instance(g_pred):
+#     global cell_index
+#
+#     print('working...')
+#     cell_index = cell_index + 1
+#
+#     return 0
+
 def my_loss_function(y_true, y_pred):
 
+    global grid_cells_id_test
+
+    # compute mean square prediction and observation
     mean_square_loss = K.mean(K.square(y_pred - y_true), axis=-1)
-    neighbor_size = 1
-    rng = np.random.RandomState(42)
-    ## 1 neighbor
-    neighbors = rng.randn(test_size, neighbor_size).astype('float32')
 
-    mean_average_neighbor_loss = K.mean(K.square(y_pred - K.sum(neighbors) / neighbor_size), axis=-1)
+    # weighted mean square with spatial concern
+    lamda = 0.02
+    neighbors_loss = np.array([], dtype='float32')
+    for group in grid_cells_id_test:
+        neighbors = get_neighbor_weight(group)
 
-    return mean_square_loss + mean_average_neighbor_loss
+        source_yield = y_pred
+        nb_yield_tensor = tf.convert_to_tensor(neighbors['nb_yield'])
+        nb_yield_tensor = tf.cast(nb_yield_tensor, tf.float32)
+        square_error = K.square(source_yield - nb_yield_tensor)
+
+        nb_weight_tensor = tf.convert_to_tensor(neighbors['nb_weight'])
+        nb_weight_tensor = tf.cast(nb_weight_tensor, tf.float32)
+
+        loss = lamda*K.sum(nb_weight_tensor*square_error)
+        np.append(neighbors_loss, loss)
+
+    # convert to tensor
+    loss_tensor = tf.convert_to_tensor(neighbors_loss, dtype='float32')
+    return mean_square_loss + K.mean(loss_tensor, axis=-1)
+    # return mean_square_loss
 
     # return mean_squared_error(y_true, y_pred)
 
@@ -123,7 +160,7 @@ model.compile(optimizer='adam', loss=my_loss_function,  metrics=['mse', 'mae', '
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []
-model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=5, batch_size=20)
+model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=8000, batch_size=20)
 
 pred1, pred2, pred3 = model.predict(dat_test)
 

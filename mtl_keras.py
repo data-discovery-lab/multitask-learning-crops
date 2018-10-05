@@ -133,10 +133,11 @@ def my_loss_function(y_true, y_pred):
     # weighted mean square with spatial concern
     lamda = 0.02
     neighbors_loss = np.array([], dtype='float32')
+    row_index = 0
     for group in grid_cells_id_test:
         neighbors = get_neighbor_weight(group)
 
-        source_yield = y_pred
+        source_yield = y_pred[row_index, :]
         nb_yield_tensor = tf.convert_to_tensor(neighbors['nb_yield'])
         nb_yield_tensor = tf.cast(nb_yield_tensor, tf.float32)
         square_error = K.square(source_yield - nb_yield_tensor)
@@ -146,6 +147,7 @@ def my_loss_function(y_true, y_pred):
 
         loss = lamda*K.sum(nb_weight_tensor*square_error)
         np.append(neighbors_loss, loss)
+        row_index = row_index + 1
 
     # convert to tensor
     loss_tensor = tf.convert_to_tensor(neighbors_loss, dtype='float32')

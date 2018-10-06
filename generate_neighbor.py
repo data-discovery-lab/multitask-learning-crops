@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import pandas as pd
 
 class Cell:
     def __init__(self, r_id, c_id, label, active=False):
@@ -47,7 +48,7 @@ class Row:
             active = False
             if self.id != 9 and self.id != 11 and self.id != 12 and self.id != 13:
                 active = True
-                if label < self.start_valid_label:
+                if label < self.start_valid_label or label > self.end_valid_label:
                     active = False
             elif self.id == 9:
                 active = True
@@ -110,12 +111,34 @@ for index, r in enumerate(row_configs):
         if c_index not in cell_map:
             cell_map[c_index] = c
 
+print('cell map size', len(cell_map))
+df = pd.read_csv('data/data_excel_converted.csv', delimiter=',')
+cell_year_yield = dict()
+for index, row in df.iterrows():
+    cell_id = row['ID']
+    yield_2000 = row['YLD00']
+    yield_2001 = row['YLD01']
+    yield_2002 = row['YLD02']
+    yield_2003 = row['YLD03']
+
+    cell_year_yield_id = str(cell_id) + 'y00'
+    cell_year_yield[cell_year_yield_id] = yield_2000
+
+    cell_year_yield_id = str(cell_id) + 'y01'
+    cell_year_yield[cell_year_yield_id] = yield_2001
+
+    cell_year_yield_id = str(cell_id) + 'y02'
+    cell_year_yield[cell_year_yield_id] = yield_2002
+
+    cell_year_yield_id = str(cell_id) + 'y03'
+    cell_year_yield[cell_year_yield_id] = yield_2003
+
 ## compute neighbors size=theta
 for neighbor_size in range(1, 6):
 
     with open('data/nb_size_' + str(neighbor_size), 'w') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
-        writer.writerow(["source", "neighbor", "distance"])
+        writer.writerow(["source", "s_y00", "s_y01", "s_y02", "s_y03", "neighbor", "distance", "nb_y00", "nb_y01", "nb_y02", "nb_y03"])
 
         for r in row_configs:
             cells = r.get_cells()
@@ -130,11 +153,18 @@ for neighbor_size in range(1, 6):
                 nb_c_min = c_id - neighbor_size
                 nb_r_max = r_id + neighbor_size
                 nb_c_max = c_id + neighbor_size
+
+                source = str(c.get_label())
+                s_y00 = cell_year_yield[source + 'y00']
+                s_y01 = cell_year_yield[source + 'y01']
+                s_y02 = cell_year_yield[source + 'y02']
+                s_y03 = cell_year_yield[source + 'y03']
+
                 for nb_r in range(nb_r_min, nb_r_max+1):
-                    if nb_r < 0:
+                    if nb_r < 0 or nb_r >= 25:
                         continue
                     for nb_c in range(nb_c_min, nb_c_max+1):
-                        if nb_c < 0:
+                        if nb_c < 0 or nb_c >= 25:
                             continue
 
                         if r_id == nb_r and c_id == nb_c:
@@ -145,10 +175,23 @@ for neighbor_size in range(1, 6):
                         if nb_index not in cell_map:
                             print("row:", nb_r, "col:", nb_c, "is not an active cell")
                             continue
-
                         nb_cell = cell_map[nb_index]
+
+                        if not nb_cell.is_active():
+                            print("row:", nb_r, "col:", nb_c, "is not active")
+                            continue
+
                         current_distance = max([abs(nb_r - r_id), abs(nb_c - c_id)])
-                        writer.writerow([c.get_label(), nb_cell.get_label(), current_distance])
+
+                        nb = str(nb_cell.get_label())
+                        if nb == '3025':
+                            print('hi')
+                        nb_y00 = cell_year_yield[nb + 'y00']
+                        nb_y01 = cell_year_yield[nb + 'y01']
+                        nb_y02 = cell_year_yield[nb + 'y02']
+                        nb_y03 = cell_year_yield[nb + 'y03']
+
+                        writer.writerow([source, s_y00, s_y01, s_y02, s_y03, nb, current_distance, nb_y00, nb_y01, nb_y02, nb_y03])
 
 
 

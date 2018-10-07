@@ -136,7 +136,7 @@ for index, row in df.iterrows():
 ## compute neighbors size=theta
 for neighbor_size in range(1, 6):
 
-    with open('data/nb_size_' + str(neighbor_size), 'w') as csv_file:
+    with open('data/nb_size_' + str(neighbor_size) + '.csv', 'w') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(["source", "s_y00", "s_y01", "s_y02", "s_y03", "neighbor", "distance", "nb_y00", "nb_y01", "nb_y02", "nb_y03"])
 

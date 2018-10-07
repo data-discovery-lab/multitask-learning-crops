@@ -67,16 +67,18 @@ grid_cells_id_test = grid_cells_id[idx_test]
 
 # Split data into test and train
 dat_train = dat[idx_train, :]
-labels = df[df.columns[3:6]]
+labels = df[df.columns[3:7]]
 
-label_train_1 = labels.values[idx_train, 0] # year 2000
-label_train_2 = labels.values[idx_train, 1] # year 2001
-label_train_3 = labels.values[idx_train, 2] # year 2002
+label_train_1 = labels.values[idx_train, 3] # year 2003
+label_train_2 = labels.values[idx_train, 2] # year 2002
+label_train_3 = labels.values[idx_train, 1] # year 2001
+label_train_4 = labels.values[idx_train, 0] # year 2000
 
 dat_test = dat[idx_test, :]
-label_test_1 = labels.values[idx_test, 0] # year 2000
-label_test_2 = labels.values[idx_test, 1] # year 2000
-label_test_3 = labels.values[idx_test, 2] # year 2000
+label_test_1 = labels.values[idx_test, 3] # year 2003
+label_test_2 = labels.values[idx_test, 2] # year 2002
+label_test_3 = labels.values[idx_test, 1] # year 2001
+label_test_4 = labels.values[idx_test, 0] # year 2000
 
 x = Input(shape=(features, ))
 shared = Dense(units=4*features)(x)
@@ -162,7 +164,7 @@ model.compile(optimizer='adam', loss=my_loss_function,  metrics=['mse', 'mae', '
 
 #muti_outputs shape= tasks x train_samples
 callbacks = []
-model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=8000, batch_size=20)
+model.fit(x=dat_train, y=[label_train_1, label_train_2, label_train_3], epochs=5000, batch_size=20)
 
 pred1, pred2, pred3 = model.predict(dat_test)
 

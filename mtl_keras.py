@@ -42,7 +42,7 @@ df.dropna(inplace=True)
 # df = DataFrame(scaled)
 
 samples = 475
-features = 42
+features = 0
 tasks = 3
 test_size = int(0.2*samples)
 
@@ -55,8 +55,19 @@ for i in range(50):
         grid_cells = df[df.columns[i]].values
     elif i == 1:
         grid_cells_id = df[df.columns[i]].values
-    if i < 8:
+    if i < 8: # ignore yield data
         continue
+
+    # if i < 15: # ignore soil properties
+    #     continue
+
+    # if i >= 15 and i <= 18: # ignore band data
+    #     continue
+
+    if i > 18: # ignore ndvi
+        continue
+
+    features = features + 1
     dat.append(df[df.columns[i]])
 
 dat = np.array(dat).transpose()
@@ -165,7 +176,7 @@ def my_loss_function(y_true, y_pred):
     lamda = 0.01
     neighbors_loss = np.array([], dtype='float32')
     row_index = 0
-    nbh_distance = 1
+    nbh_distance = 5
     for group in grid_cells_id_test:
         neighbors = get_neighbor_weight(group, nbh_distance=nbh_distance)
         if neighbors.isnull().values.any():

@@ -13,6 +13,12 @@ from sklearn.utils import check_array
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from scipy.stats import pearsonr
+
+from sklearn import preprocessing
+from sklearn.preprocessing import normalize
+
 from sklearn.preprocessing.data import MinMaxScaler
 
 from keras.regularizers import l2
@@ -31,6 +37,17 @@ from keras.regularizers import l2
 
 df = pd.read_csv('data/data_excel_converted.csv', delimiter=',')
 df.dropna(inplace=True)
+
+# normalize np array
+# exis=0 => by rows (samples)
+# axis=1 => by columns (features
+def normalize_nparray(x, axis=1):
+    ## normalization
+    min_max_scaler = preprocessing.MinMaxScaler()
+    x = min_max_scaler.fit_transform(x)
+
+    return min_max_scaler, x
+
 
 # df['prediction'] = np.array(np.random.randn(len(df.index)))
 
@@ -63,14 +80,27 @@ for i in range(50):
 
     # if i >= 15 and i <= 18: # ignore band data
     #     continue
-
-    if i > 18: # ignore ndvi
-        continue
+    #
+    # if i > 18: # ignore ndvi
+    #     continue
 
     features = features + 1
     dat.append(df[df.columns[i]])
 
+
 dat = np.array(dat).transpose()
+labels = df[df.columns[3:7]]
+
+#### correlation calculation ###
+# yield_year_count = len(labels.columns)
+# for f in range(features):
+#     for y in range(yield_year_count):
+#         f_label = df.columns[8+f]
+#         y_label = df.columns[3 + y]
+#         coeff, pvalue = pearsonr(dat[:, f], labels.values[:, y])
+#         print("feature:", f_label, ", yield:", y_label, "; coeff:", coeff, ";p-value:", pvalue)
+
+# scaler, dat = normalize_nparray(dat)
 
 # Generate indexes of test and train
 idx_list = np.linspace(0, samples-1, num=samples)
@@ -83,7 +113,6 @@ grid_cells_id_test = grid_cells_id[idx_test]
 
 # Split data into test and train
 dat_train = dat[idx_train, :]
-labels = df[df.columns[3:7]]
 
 label_train_1 = labels.values[idx_train, 3] # year 2003
 label_train_2 = labels.values[idx_train, 2] # year 2002

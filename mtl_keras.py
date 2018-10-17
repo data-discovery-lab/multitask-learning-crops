@@ -7,6 +7,7 @@ from pandas.core.frame import DataFrame
 from sklearn.metrics import mean_squared_log_error, mean_squared_error, mean_absolute_error
 from keras import backend as K
 import tensorflow as tf
+from math import sqrt
 from keras.optimizers import SGD
 from sklearn.utils import check_array
 
@@ -84,8 +85,22 @@ for i in range(50):
     # if i > 18: # ignore ndvi
     #     continue
 
+    # if i > 44: # ignore ndvi VI03_606
+    #     continue
+    #
+    # if i > 46: # ignore ndvi VI03_724
+    #     continue
+    #
+    # if i > 47: # ignore ndvi VI03_825
+    #     continue
+    #
+    # if i > 48: # ignore ndvi VI03_926
+    #     continue
+    col_name = df.columns[i]
+    # if i == 46:
+    #     print(col_name)
     features = features + 1
-    dat.append(df[df.columns[i]])
+    dat.append(df[col_name])
 
 
 dat = np.array(dat).transpose()
@@ -133,20 +148,24 @@ sub2 = Dense(units=64, activation='relu')(shared)
 sub3 = Dense(units=64, activation='relu')(shared)
 #
 # # lstm1 = LSTM(16, return_sequences=True)(sub1)
-# d1 = Dense(units=1, activation='relu')(sub1)
-# drop1 = Dropout(0.1)(d1)
-# d2 = Dense(units=1, activation='relu')(sub2)
-# drop2 = Dropout(0.1)(d2)
-# d3 = Dense(units=1, activation='relu')(sub3)
-# drop3 = Dropout(0.1)(d3)
-#
+d1 = Dense(units=32, activation='relu')(sub1)
+drop1 = Dropout(0.1)(d1)
+d2 = Dense(units=32, activation='relu')(sub2)
+drop2 = Dropout(0.1)(d2)
+d3 = Dense(units=32, activation='relu')(sub3)
+drop3 = Dropout(0.1)(d3)
+# #
 # sub1 = Dense(units=16, activation='relu')(drop1)
 # sub2 = Dense(units=16, activation='relu')(drop2)
 # sub3 = Dense(units=16, activation='relu')(drop3)
 
-out1 = Dense(units=1, activation='linear')(sub1)
-out2 = Dense(units=1, activation='linear')(sub2)
-out3 = Dense(units=1, activation='linear')(sub3)
+out1 = Dense(units=1, activation='linear')(drop1)
+out2 = Dense(units=1, activation='linear')(drop2)
+out3 = Dense(units=1, activation='linear')(drop3)
+
+# out1 = Dense(units=1, activation='linear')(sub1)
+# out2 = Dense(units=1, activation='linear')(sub2)
+# out3 = Dense(units=1, activation='linear')(sub3)
 
 
 model = Model(inputs=x, outputs=[out1, out2, out3])
@@ -273,13 +292,14 @@ final_cell_id = final_data[:, 3]
 # final_data.sort(axis=1)
 
 my_output = pd.DataFrame({'fid': final_x, 'id': final_cell_id, 'label': final_label, 'predicted': final_prediction})
-my_output.to_csv('output/prediction.csv', index=False)
+my_output.to_csv('output/partial_ndvi/prediction.csv', index=False)
 
 plt.plot(final_x,  final_prediction, 'red')
 plt.plot(final_x, final_label, 'blue')
 
 mse = mean_squared_error(label_test_1, pred1.flatten())
 print("test mse=", mse)
+print("test rmse=", sqrt(mse))
 print("test mape=", mean_absolute_percentage_error(label_test_1, pred1.flatten()))
 print("test mae=", mean_absolute_error(label_test_1, pred1.flatten()))
 print("me=", max(abs(plot_y)))
@@ -292,4 +312,4 @@ df['PRED_03'] = pred2003.flatten()
 df['PRED_02'] = pred2002.flatten()
 df['PRED_01'] = pred2001.flatten()
 
-df.to_csv('output/prediction_f29_' + str(mse) + '.csv', index=False)
+df.to_csv('output/partial_ndvi/prediction_f29_' + str(mse) + '.csv', index=False)
